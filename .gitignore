@@ -1,0 +1,5 @@
+#no incluir entornos virtuales
+.venv/
+
+#pycache
+__pycache__/
