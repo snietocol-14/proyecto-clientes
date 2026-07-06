@@ -9,9 +9,9 @@ url_bd = f"sqlite:///{nombre_bd}"
 motor_bd = create_engine(url_bd)
 
 #definir método para crear las tablas
-def crear_tablas():
+def crear_tablas(app: FastAPI):
     SQLModel.metadata.create_all(motor_bd)
-    yield
+    yield #no hay nada para retornar
 
 #definir método para la sesión
 def obtener_sesion():

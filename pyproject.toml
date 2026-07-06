@@ -8,8 +8,3 @@ dependencies = [
     "fastapi[standard]>=0.136.1",
     "sqlmodel>=0.0.39",
 ]
-
-[tool.uv.workspace]
-members = [
-    "app",
-]

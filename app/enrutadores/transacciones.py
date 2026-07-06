@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, status
 from ..modelos.transacciones import Transaccion, TransaccionCrear, TransaccionEditar
 from ..modelos.facturas import Factura
 from ..listas import lista_facturas, lista_transacciones
+from ..conexion_bd import Sesion_dependencia
+from sqlmodel import select
 
 rutas_transacciones = APIRouter()
 
@@ -11,8 +13,8 @@ rutas_transacciones = APIRouter()
 #crear endpoints para transacciones
 
 @rutas_transacciones.get("/transacciones", response_model=list[Transaccion])
-async def listar_transacciones():
-    return lista_transacciones
+async def listar_transacciones(sesion: Sesion_dependencia):
+    return sesion.exec(select(Transaccion)).all()
 
 @rutas_transacciones.get("/transacciones/{id_transaccion}", response_model=Transaccion)
 async def listar_transaccion(id_transaccion: int):
@@ -21,12 +23,9 @@ async def listar_transaccion(id_transaccion: int):
             return obj_transaccion
         
 @rutas_transacciones.post("/transacciones/{factura_id}", response_model=Transaccion)
-async def crear_transaccion(factura_id: int, datos_transaccion: TransaccionCrear):
+async def crear_transaccion(factura_id: int, datos_transaccion: TransaccionCrear, sesion:Sesion_dependencia):
     #buscar la factura
-    factura_encontrada = None
-    for factura in lista_facturas:
-        if factura.id == factura_id:
-            factura_encontrada = factura
+    factura_encontrada = sesion.get(Factura, factura_id)
     #mensaje si la factura no existe
     if not factura_encontrada:
         raise HTTPException(
@@ -39,8 +38,9 @@ async def crear_transaccion(factura_id: int, datos_transaccion: TransaccionCrear
     transaccion_val.factura_id = factura_id
     factura_encontrada.transacciones.append(transaccion_val)
     #id de la transaccion
-    transaccion_val.id = len(lista_transacciones) + 1
-    lista_transacciones.append(transaccion_val)
+    sesion.add(transaccion_val)
+    sesion.commit()
+    sesion.refresh(transaccion_val)
     return transaccion_val
 
 @rutas_transacciones.patch("/transacciones/{id_transaccion}", response_model=Transaccion)

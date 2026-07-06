@@ -1,25 +1,22 @@
 from pydantic import computed_field
 from sqlmodel import SQLModel, Field, Relationship
-from modelos.clientes import Cliente
+from .transacciones import Transaccion
+from .clientes import Cliente, ClienteLeer
 from datetime import datetime
 
 class FacturaBase(SQLModel):
-    fecha: str = datetime.now()
-    cliente: Cliente
+    fecha: str = Field(default=datetime.now())
+
 
     @computed_field
     @property
     def vr_total(self) -> float:
-        #calcular (cantidad*vr_unitario)
-        #consultar el id actual de factura
-        factura_id_actual = getattr(self, "id", None)
         total_factura = 0.0
-        if not factura_id_actual or not self.transacciones:
+        if self.transacciones == None:
             return total_factura
-        #recorrer la lista de transacciones según el factura_id
+        # #recorrer la lista de transacciones según el factura_id
         for transaccion in self.transacciones:
-            if transaccion.factura_id == factura_id_actual:
-                total_factura += transaccion.cantidad * transaccion.vr_unitario
+            total_factura += transaccion.cantidad * transaccion.vr_unitario
         return total_factura
 
 class FacturaCrear(FacturaBase):
@@ -28,5 +25,18 @@ class FacturaCrear(FacturaBase):
 class FacturaEditar(FacturaBase):
     pass
 
-class Factura(FacturaBase):
-    id:int | None = None
+class Factura(FacturaBase, table=True):
+    id:int | None = Field(default=None, primary_key=True)
+    cliente_id: int = Field(default=None, foreign_key="cliente.id")
+    #crear relaciones virtuales con cliente, transacciones
+    cliente: Cliente = Relationship(back_populates="factura")
+    transacciones: list[Transaccion] = Relationship(back_populates="factura")
+
+#crear modelo para mostrar la usuario o el cliente
+class FacturaLeer(FacturaBase):
+    id:int
+    cliente:ClienteLeer
+
+class FacturaLeerCompuesta(FacturaLeer):
+    transacciones:list[Transaccion] = []
+
