@@ -36,7 +36,7 @@ async def crear_cliente(datos_cliente: ClienteCrear, mi_sesion: Sesion_dependenc
     return cliente_val
 
 #editar un cliente
-@rutas_clientes.patch("/clientes/{id}", response_model=Cliente)
+@rutas_clientes.patch("/clientes/{cliente_id}", response_model=Cliente)
 async def editar_cliente(
     cliente_id:int, datos_cliente: ClienteEditar, mi_sesion: Sesion_dependencia
 ):
